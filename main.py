@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
         # Agregar estilo específico al panel lateral
         side_panel.setStyleSheet("""
             #sidePanel {
-                background-color: #e8e8e8;
+                background-color: transparent;
                 border-radius: 8px;
             }
         """)
@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
             font-weight: bold;
             color: #0078d7;
             padding: 20px 10px;
+            background-color: transparent;
         """)
         side_layout.addWidget(lbl_sistema)
 
@@ -93,13 +94,12 @@ class MainWindow(QMainWindow):
                 font-weight: 500;
                 border: none;
                 border-radius: 6px;
-                background-color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(0, 120, 215, 0.1);
+                background-color: transparent;
             }
             QPushButton:pressed {
-                background-color: rgba(0, 120, 215, 0.2);
+                background-color: transparent;
             }
         """
 
