@@ -751,344 +751,132 @@ class ReportsView(QWidget):
             QMessageBox.critical(self, "Error", f"Error al generar reporte: {str(e)}")
 
     def exportar_excel(self):
-        """Exporta el reporte a Excel con formato."""
-        try:
-            # Intentar usar openpyxl para Excel real
+            """Exporta el reporte a Excel en carpeta Reportes Excel."""
             try:
+                import os
                 from openpyxl import Workbook
                 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-                
-                filename = f"reporte_gimnasio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-                
-                # Crear libro de Excel
+                from datetime import datetime
+
+                # Crear carpeta destino
+                carpeta = "Reportes Excel"
+                os.makedirs(carpeta, exist_ok=True)
+
+                # Nombre descriptivo
+                mes_nombre = datetime.now().strftime("%B").capitalize()
+                anio = datetime.now().year
+                filename = f"Reporte Gimnasio - {mes_nombre} {anio}.xlsx"
+                ruta = os.path.join(carpeta, filename)
+
                 wb = Workbook()
                 ws = wb.active
                 ws.title = "Reporte de Pagos"
-                
-                # Escribir encabezados con formato
+
+                # Encabezados
                 headers = ["Fecha", "Socio", "Monto", "Mes Correspondiente", "Plan"]
                 header_fill = PatternFill(start_color="0078D7", end_color="0078D7", fill_type="solid")
                 header_font = Font(bold=True, color="FFFFFF", size=12)
                 border = Border(
-                    left=Side(style='thin'),
-                    right=Side(style='thin'),
-                    top=Side(style='thin'),
-                    bottom=Side(style='thin')
+                    left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin')
                 )
-                
+
                 for col, header in enumerate(headers, 1):
                     cell = ws.cell(row=1, column=col, value=header)
                     cell.fill = header_fill
                     cell.font = header_font
                     cell.alignment = Alignment(horizontal='center', vertical='center')
                     cell.border = border
-                
-                # Escribir datos
-                for row in range(self.tabla.rowCount()):
-                    for col in range(self.tabla.columnCount()):
-                        item = self.tabla.item(row, col)
-                        value = item.text() if item else ""
-                        
-                        # Limpiar el formato de monto para Excel
-                        if col == 2 and value:  # Columna de Monto
-                            # Remover $ y comas, convertir a número
-                            value_clean = value.replace('$', '').replace(',', '')
+
+                # Datos
+                for r in range(self.tabla.rowCount()):
+                    for c in range(self.tabla.columnCount()):
+                        item = self.tabla.item(r, c)
+                        val = item.text() if item else ""
+                        if c == 2:
+                            val = val.replace('$', '').replace(',', '')
                             try:
-                                value = float(value_clean)
+                                val = float(val)
                             except:
                                 pass
-                        
-                        cell = ws.cell(row=row+2, column=col+1, value=value)
+                        cell = ws.cell(row=r+2, column=c+1, value=val)
                         cell.border = border
-                        cell.alignment = Alignment(horizontal='left', vertical='center')
-                        
-                        # Formato especial para montos
-                        if col == 2 and isinstance(value, (int, float)):
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        if c == 2 and isinstance(val, (int, float)):
                             cell.number_format = '$#,##0.00'
-                
-                # Ajustar ancho de columnas
-                ws.column_dimensions['A'].width = 15  # Fecha
-                ws.column_dimensions['B'].width = 30  # Socio
-                ws.column_dimensions['C'].width = 15  # Monto
-                ws.column_dimensions['D'].width = 20  # Mes Correspondiente
-                ws.column_dimensions['E'].width = 20  # Plan
-                
-                # Guardar archivo
-                wb.save(filename)
-                
-                QMessageBox.information(
-                    self,
-                    "Exportación Exitosa",
-                    f"Reporte exportado exitosamente a:\n{filename}\n\n"
-                    f"El archivo Excel tiene formato profesional con:\n"
-                    f"✓ Encabezados con color\n"
-                    f"✓ Celdas separadas correctamente\n"
-                    f"✓ Montos formateados como moneda"
-                )
-                
-            except ImportError:
-                # Si no está instalado openpyxl, usar CSV mejorado
-                QMessageBox.warning(
-                    self,
-                    "Librería no instalada",
-                    "La librería 'openpyxl' no está instalada.\n\n"
-                    "Para instalarla, ejecutá en tu terminal:\n"
-                    "pip install openpyxl\n\n"
-                    "Se exportará en formato CSV como alternativa."
-                )
-                self._exportar_csv()
-                
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al exportar: {str(e)}")
 
-    def _exportar_csv(self):
-        """Exporta a CSV como alternativa."""
-        try:
-            import csv
-            
-            filename = f"reporte_gimnasio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            
-            with open(filename, 'w', newline='', encoding='utf-8-sig') as file:
-                writer = csv.writer(file, delimiter=';')  # Usar ; como separador
-                
-                # Escribir encabezados
-                headers = ["Fecha", "Socio", "Monto", "Mes Correspondiente", "Plan"]
-                writer.writerow(headers)
-                
-                # Escribir datos
-                for row in range(self.tabla.rowCount()):
-                    row_data = []
-                    for col in range(self.tabla.columnCount()):
-                        item = self.tabla.item(row, col)
-                        row_data.append(item.text() if item else "")
-                    writer.writerow(row_data)
-            
-            QMessageBox.information(
-                self,
-                "Exportación CSV",
-                f"Reporte exportado a CSV:\n{filename}\n\n"
-                f"Para abrirlo correctamente en Excel:\n"
-                f"1. Abrí Excel\n"
-                f"2. Datos > Desde texto/CSV\n"
-                f"3. Seleccioná el archivo\n"
-                f"4. Elegí delimitador: Punto y coma (;)"
-            )
-        except Exception as e:
-            raise e
+                # Ajustar ancho
+                ws.column_dimensions['A'].width = 15
+                ws.column_dimensions['B'].width = 30
+                ws.column_dimensions['C'].width = 15
+                ws.column_dimensions['D'].width = 20
+                ws.column_dimensions['E'].width = 25
+
+                wb.save(ruta)
+                QMessageBox.information(self, "✅ Éxito", f"Archivo Excel guardado en:\n{os.path.abspath(ruta)}")
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al exportar Excel:\n{e}")
 
     def exportar_pdf(self):
-        """Exporta el reporte a PDF con formato profesional."""
-        try:
-            from reportlab.lib import colors
-            from reportlab.lib.pagesizes import letter, A4
-            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.units import inch
-            from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
-            
-            filename = f"reporte_gimnasio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            
-            # Crear documento PDF
-            doc = SimpleDocTemplate(filename, pagesize=A4,
-                                   rightMargin=30, leftMargin=30,
-                                   topMargin=30, bottomMargin=30)
-            
-            # Container para los elementos del PDF
-            elements = []
-            styles = getSampleStyleSheet()
-            
-            # Estilo personalizado para el título
-            title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                textColor=colors.HexColor('#0078d7'),
-                spaceAfter=30,
-                alignment=TA_CENTER,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Estilo para subtítulos
-            subtitle_style = ParagraphStyle(
-                'CustomSubtitle',
-                parent=styles['Heading2'],
-                fontSize=14,
-                textColor=colors.HexColor('#333333'),
-                spaceAfter=12,
-                spaceBefore=12,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Título principal
-            titulo = Paragraph("📊 Reporte de Pagos - Gimnasio", title_style)
-            elements.append(titulo)
-            
-            # Información del período
-            periodo_text = f"<b>Período:</b> {self.combo_periodo.currentText()}"
-            fecha_text = f"<b>Generado el:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-            
-            info_style = ParagraphStyle(
-                'Info',
-                parent=styles['Normal'],
-                fontSize=10,
-                textColor=colors.HexColor('#666666'),
-                alignment=TA_CENTER
-            )
-            
-            elements.append(Paragraph(periodo_text, info_style))
-            elements.append(Paragraph(fecha_text, info_style))
-            elements.append(Spacer(1, 20))
-            
-            # Resumen Financiero
-            elements.append(Paragraph("💰 Resumen Financiero", subtitle_style))
-            
-            resumen_data = [
-                ['Concepto', 'Valor'],
-                ['Total Ingresos', self.card_ingresos.lbl_valor.text()],
-                ['Socios que Pagaron', self.card_socios_pagaron.lbl_valor.text()],
-                ['Promedio por Pago', self.card_promedio.lbl_valor.text()]
-            ]
-            
-            resumen_table = Table(resumen_data, colWidths=[3*inch, 2*inch])
-            resumen_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0078d7')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 10),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')])
-            ]))
-            
-            elements.append(resumen_table)
-            elements.append(Spacer(1, 20))
-            
-            # Estadísticas de Socios
-            elements.append(Paragraph("👥 Estadísticas de Socios", subtitle_style))
-            
-            socios_data = [
-                ['Concepto', 'Cantidad'],
-                ['Total Socios', self.card_total_socios.lbl_valor.text()],
-                ['Nuevos en Período', self.card_nuevos.lbl_valor.text()],
-                ['Socios Activos', self.card_activos.lbl_valor.text()]
-            ]
-            
-            socios_table = Table(socios_data, colWidths=[3*inch, 2*inch])
-            socios_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0078d7')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 10),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')])
-            ]))
-            
-            elements.append(socios_table)
-            elements.append(Spacer(1, 20))
-            
-            # Detalle de Pagos
-            elements.append(Paragraph("📋 Detalle de Pagos del Período", subtitle_style))
-            
-            # Preparar datos de la tabla
-            data = [['Fecha', 'Socio', 'Monto', 'Mes Corresp.', 'Plan']]
-            
-            for row in range(self.tabla.rowCount()):
-                row_data = []
-                for col in range(self.tabla.columnCount()):
-                    item = self.tabla.item(row, col)
-                    text = item.text() if item else ""
-                    # Acortar nombres muy largos para que quepan
-                    if col == 1 and len(text) > 25:
-                        text = text[:22] + "..."
-                    if col == 4 and len(text) > 15:
-                        text = text[:12] + "..."
-                    row_data.append(text)
-                data.append(row_data)
-            
-            # Si hay muchos registros, limitar para que quepa en el PDF
-            max_rows = 30
-            if len(data) > max_rows + 1:
-                data = data[:max_rows + 1]
-                elements.append(Paragraph(
-                    f"<i>Nota: Se muestran los primeros {max_rows} registros de {self.tabla.rowCount()} totales.</i>",
-                    info_style
-                ))
-                elements.append(Spacer(1, 10))
-            
-            # Crear tabla con anchos de columna ajustados
-            detail_table = Table(data, colWidths=[1.2*inch, 1.8*inch, 1*inch, 1.2*inch, 1.3*inch])
-            detail_table.setStyle(TableStyle([
-                # Encabezado
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0078d7')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                ('TOPPADDING', (0, 0), (-1, 0), 8),
-                
-                # Datos
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # Fecha centrada
-                ('ALIGN', (1, 1), (1, -1), 'LEFT'),    # Nombre a la izquierda
-                ('ALIGN', (2, 1), (2, -1), 'RIGHT'),   # Monto a la derecha
-                ('ALIGN', (3, 1), (3, -1), 'CENTER'),  # Mes centrado
-                ('ALIGN', (4, 1), (4, -1), 'LEFT'),    # Plan a la izquierda
-                
-                # Bordes y colores alternados
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9f9f9')]),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 1), (-1, -1), 6),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-            ]))
-            
-            elements.append(detail_table)
-            
-            # Pie de página
-            elements.append(Spacer(1, 30))
-            footer_style = ParagraphStyle(
-                'Footer',
-                parent=styles['Normal'],
-                fontSize=8,
-                textColor=colors.HexColor('#999999'),
-                alignment=TA_CENTER
-            )
-            footer_text = "Sistema de Gestión de Gimnasio | Generado automáticamente"
-            elements.append(Paragraph(footer_text, footer_style))
-            
-            # Construir PDF
-            doc.build(elements)
-            
-            QMessageBox.information(
-                self,
-                "✅ Exportación Exitosa",
-                f"Reporte PDF generado exitosamente:\n{filename}\n\n"
-                f"El archivo incluye:\n"
-                f"✓ Resumen financiero completo\n"
-                f"✓ Estadísticas de socios\n"
-                f"✓ Detalle de todos los pagos\n"
-                f"✓ Formato profesional con colores"
-            )
-            
-        except ImportError:
-            QMessageBox.warning(
-                self,
-                "Librería no instalada",
-                "La librería 'reportlab' no está instalada.\n\n"
-                "Para instalarla, ejecutá en tu terminal:\n"
-                "pip install reportlab\n\n"
-                "Luego podrás exportar reportes en formato PDF."
-            )
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al exportar PDF: {str(e)}")
+            """Exporta el reporte a PDF en carpeta Reportes PDF."""
+            try:
+                import os
+                from reportlab.lib import colors
+                from reportlab.lib.pagesizes import A4
+                from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.lib.enums import TA_CENTER
+                from datetime import datetime
+
+                # Crear carpeta destino
+                carpeta = "Reportes PDF"
+                os.makedirs(carpeta, exist_ok=True)
+
+                # Nombre descriptivo
+                mes_nombre = datetime.now().strftime("%B").capitalize()
+                anio = datetime.now().year
+                filename = f"Reporte Gimnasio - {mes_nombre} {anio}.pdf"
+                ruta = os.path.join(carpeta, filename)
+
+                # Crear documento PDF
+                doc = SimpleDocTemplate(ruta, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+                elements = []
+                styles = getSampleStyleSheet()
+
+                title_style = ParagraphStyle(
+                    "Title", parent=styles["Heading1"], fontSize=22, textColor=colors.HexColor("#0078D7"),
+                    alignment=TA_CENTER, spaceAfter=20
+                )
+                elements.append(Paragraph("📊 Reporte de Pagos - Gimnasio", title_style))
+                elements.append(Paragraph(f"<b>Generado:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles["Normal"]))
+                elements.append(Spacer(1, 20))
+
+                # Datos de la tabla
+                data = [["Fecha", "Socio", "Monto", "Mes", "Plan"]]
+                for r in range(self.tabla.rowCount()):
+                    row_data = []
+                    for c in range(self.tabla.columnCount()):
+                        item = self.tabla.item(r, c)
+                        row_data.append(item.text() if item else "")
+                    data.append(row_data)
+
+                table = Table(data, colWidths=[70, 130, 60, 80, 90])
+                table.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0078D7")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                    ("TOPPADDING", (0, 0), (-1, 0), 8),
+                ]))
+                elements.append(table)
+
+                doc.build(elements)
+                QMessageBox.information(self, "✅ Éxito", f"PDF generado en:\n{os.path.abspath(ruta)}")
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al exportar PDF:\n{e}")
