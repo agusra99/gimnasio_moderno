@@ -52,12 +52,13 @@ class DashboardHome(QWidget):
         # === ENCABEZADO ===
         header_layout = QHBoxLayout()
         
-        title = QLabel("📊 Dashboard - Sistema de Gestión de Gimnasio")
+        title = QLabel("📊 Sistema de Gestión de Gimnasio")
         title.setStyleSheet("""
             font-size: 28px;
             font-weight: bold;
             color: #0078d7;
             padding: 15px;
+            background-color: transparent;
         """)
         
         fecha_label = QLabel(datetime.now().strftime("%d/%m/%Y %H:%M"))
