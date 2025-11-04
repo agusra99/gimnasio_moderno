@@ -14,6 +14,8 @@ from controllers.members_controller import MembersController
 from controllers.plans_controller import PlansController
 from controllers.payments_controller import PaymentsController
 from email_service import EmailService
+from whatsapp import VentanaWhatsApp
+from estado_pagos import VentanaEstadoPagos
 
 
 class MainWindow(QMainWindow):
@@ -72,9 +74,10 @@ class MainWindow(QMainWindow):
         self.btnSocios = QPushButton("👥 Socios")
         self.btnPlanes = QPushButton("📅 Planes")
         self.btnPagos = QPushButton("💰 Pagos")
+        self.btnEstado = QPushButton("📊 Estado de Pagos")
         self.btnNotificaciones = QPushButton("🔔 Notificaciones")
         self.btnReportes = QPushButton("📈 Reportes")
-        self.btnWhatsapp = QPushButton("💬 WhatsApp")  # ✅ Nuevo botón
+        self.btnWhatsapp = QPushButton("💬 WhatsApp")
         self.btnEmails = QPushButton("📧 Config. Emails")
         self.btnTema = QPushButton("🌙 Cambiar Tema")
         self.btnSalir = QPushButton("🚪 Salir")
@@ -98,7 +101,7 @@ class MainWindow(QMainWindow):
         """
 
         for btn in [
-            self.btnSocios, self.btnPlanes, self.btnPagos, self.btnNotificaciones,
+            self.btnSocios, self.btnPlanes, self.btnPagos, self.btnEstado, self.btnNotificaciones,
             self.btnReportes, self.btnWhatsapp, self.btnEmails, self.btnTema, self.btnSalir
         ]:
             btn.setStyleSheet(menu_style)
@@ -153,6 +156,7 @@ class MainWindow(QMainWindow):
         self.btnSocios.clicked.connect(self.abrir_socios)
         self.btnPlanes.clicked.connect(self.abrir_planes)
         self.btnPagos.clicked.connect(self.abrir_pagos)
+        self.btnEstado.clicked.connect(self.abrir_estado_pagos)
         self.btnNotificaciones.clicked.connect(self.abrir_notificaciones)
         self.btnReportes.clicked.connect(self.abrir_reportes)
         self.btnWhatsapp.clicked.connect(self.abrir_whatsapp)  # ✅ Nuevo
@@ -226,15 +230,12 @@ class MainWindow(QMainWindow):
 
     def abrir_whatsapp(self):
         """Abre la ventana de envío de mensajes por WhatsApp."""
-        try:
-            from views.whatsapp_reminder import WhatsappReminderView
-            self.whatsapp_window = WhatsappReminderView(self.db_connection.db_name)
-            self.whatsapp_window.setWindowTitle("Enviar mensajes por WhatsApp")
-            self.whatsapp_window.resize(900, 600)
-            self.whatsapp_window.setStyleSheet(self.theme_manager.get_theme())
-            self.whatsapp_window.show()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo abrir WhatsApp:\n{e}")
+        self.ventana_whatsapp = VentanaWhatsApp()
+        self.ventana_whatsapp.show()
+
+    def abrir_estado_pagos(self):
+        self.ventana_estado_pagos = VentanaEstadoPagos()
+        self.ventana_estado_pagos.show()
 
     def abrir_email_settings(self):
         try:
